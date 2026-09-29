@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BESTer">
+<meta name="theme-color" content="#06050a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>BESTer</title>
+<style>
+  :root { --bg:#06050a; --fg:#fff; --muted:#9a9ab0; --accent:#ff2d7a; --accent2:#00c8ff; --green:#1ed760; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; overflow:hidden; }
+  .screen { position:fixed; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center;
+    padding:calc(env(safe-area-inset-top) + 20px) 24px calc(env(safe-area-inset-bottom) + 24px); text-align:center; }
+  .screen.on { display:flex; }
+  h1 { font-size:44px; margin:0 0 6px; letter-spacing:-1px; }
+  h1 span { color:var(--accent); }
+  .hero { width:min(86vw,380px); height:auto; margin-bottom:4px; -webkit-mask-image:radial-gradient(ellipse 72% 70% at 50% 46%, #000 62%, transparent 100%); mask-image:radial-gradient(ellipse 72% 70% at 50% 46%, #000 62%, transparent 100%); }
+  .slogan { font-family:Georgia,'Times New Roman',serif; font-style:italic; font-size:20px; margin:0 0 4px;
+    background:linear-gradient(180deg,#fff4c4,#eec45c 45%,#b8801f 60%,#f6d678); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  p { color:var(--muted); line-height:1.45; margin:8px 0; }
+  button { font:inherit; border:0; border-radius:999px; cursor:pointer; }
+  .big { background:linear-gradient(180deg,#f6d678,#c8942e); color:#1a1206; font-size:22px; font-weight:700; padding:20px 56px; margin-top:22px;
+    box-shadow:0 10px 40px rgba(214,170,70,.35); }
+  .big.green { background:var(--green); color:#000; box-shadow:0 10px 40px rgba(30,215,96,.35); }
+  .ghost { background:rgba(255,255,255,.1); color:#fff; padding:14px 26px; font-size:16px; margin:6px; }
+  .link { background:none; color:var(--muted); text-decoration:underline; font-size:14px; margin-top:18px; }
+  .gear { position:absolute; top:calc(env(safe-area-inset-top) + 14px); right:16px; background:none; color:var(--muted); font-size:26px; }
+  input { width:100%; max-width:420px; padding:14px 16px; border-radius:12px; border:1px solid #333; background:#15151f; color:#fff; font-size:16px; }
+  .box { background:#15151f; border-radius:14px; padding:14px; width:100%; max-width:420px; text-align:left; margin:10px 0; font-size:14px; }
+  .box code { word-break:break-all; color:var(--accent2); }
+  label { display:block; font-size:13px; color:var(--muted); margin:14px 0 6px; text-align:left; width:100%; max-width:420px; }
+
+  /* scanner */
+  #scan { padding:0; background:#000; }
+  #video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .frame { position:relative; width:68vmin; height:68vmin; border-radius:24px;
+    box-shadow:0 0 0 100vmax rgba(0,0,0,.55); }
+  .frame::before,.frame::after { content:""; position:absolute; inset:-3px; border-radius:26px; border:4px solid transparent;
+    border-top-color:var(--accent); border-bottom-color:var(--accent2); animation:spin 3s linear infinite; }
+  .frame::after { animation-direction:reverse; opacity:.5; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .scanhint { position:absolute; bottom:calc(env(safe-area-inset-bottom) + 90px); left:0; right:0; font-size:18px; font-weight:600;
+    text-shadow:0 2px 8px #000; }
+  .topbar { position:absolute; top:calc(env(safe-area-inset-top) + 12px); left:12px; right:12px; display:flex; justify-content:space-between; }
+
+  /* playing */
+  .eq { display:flex; gap:10px; align-items:flex-end; height:140px; margin:10px 0 30px; }
+  .eq i { width:18px; border-radius:9px; background:linear-gradient(var(--accent),var(--accent2)); animation:bounce 1s ease-in-out infinite; }
+  .eq i:nth-child(1){animation-delay:-.2s}.eq i:nth-child(2){animation-delay:-.5s}.eq i:nth-child(3){animation-delay:-.1s}
+  .eq i:nth-child(4){animation-delay:-.7s}.eq i:nth-child(5){animation-delay:-.35s}.eq i:nth-child(6){animation-delay:-.6s}
+  .eq.paused i { animation-play-state:paused; opacity:.4; }
+  @keyframes bounce { 0%,100%{height:20%} 50%{height:100%} }
+  .row { display:flex; flex-wrap:wrap; justify-content:center; }
+  #toast { position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom) + 30px); transform:translateX(-50%); background:#222;
+    color:#fff; padding:12px 18px; border-radius:12px; font-size:15px; max-width:90vw; opacity:0; transition:opacity .25s; z-index:9; pointer-events:none; }
+  #toast.on { opacity:1; }
+  .spinner { width:48px; height:48px; border:5px solid #333; border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite; }
+</style>
+</head>
+<body>
+
+<!-- START -->
+<section class="screen" id="start">
+  <button class="gear" onclick="show('settings')" aria-label="Ayarlar">⚙︎</button>
+  <img class="hero" src="bester-hero.jpg" alt="BESTer">
+  <p class="slogan" id="slogan">Prestij Müzik</p>
+  <p>Kartı okut, şarkıyı dinle, yılını tahmin et.</p>
+  <button class="big" id="startBtn">Başla</button>
+  <p id="startNote" style="font-size:13px;margin-top:18px"></p>
+</section>
+
+<!-- SCANNER -->
+<section class="screen" id="scan">
+  <video id="video" playsinline muted></video>
+  <div class="topbar"><button class="ghost" onclick="goHome()">✕</button></div>
+  <div class="frame"></div>
+  <div class="scanhint">QR kodu çerçeveye getir</div>
+</section>
+
+<!-- LOADING -->
+<section class="screen" id="loading">
+  <div class="spinner"></div>
+  <p id="loadingText">Şarkı başlatılıyor…</p>
+</section>
+
+<!-- PLAYING -->
+<section class="screen" id="playing">
+  <div class="eq" id="eq"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <p style="font-size:20px;color:#fff;font-weight:600;margin:0">Şarkı çalıyor</p>
+  <p>Hangi yıl? Kartı zaman çizelgene yerleştir.</p>
+  <div class="row" style="margin-top:14px">
+    <button class="ghost" id="pauseBtn">⏸ Durdur</button>
+    <button class="ghost" id="restartBtn">↺ Baştan</button>
+  </div>
+  <button class="big" id="nextBtn">Sıradaki kart</button>
+</section>
+
+<!-- NO DEVICE -->
+<section class="screen" id="nodevice">
+  <h2 style="margin:0 0 8px">Spotify hazır değil</h2>
+  <p>Spotify uygulamasını aç, herhangi bir şarkıyı 1 saniye çalıp durdur, sonra buraya geri dön.</p>
+  <button class="big green" onclick="location.href='spotify:'">Spotify'ı aç</button>
+  <button class="ghost" style="margin-top:14px" id="retryBtn">Tekrar dene</button>
+  <button class="link" onclick="toScanner()">Kameraya dön</button>
+</section>
+
+<!-- SETTINGS -->
+<section class="screen" id="settings">
+  <h2 style="margin:0 0 4px">Ayarlar</h2>
+  <label for="clientId">Spotify Client ID</label>
+  <input id="clientId" placeholder="örn. 3f2a…" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <div class="box">Spotify Developer Dashboard'da <b>Redirect URI</b> olarak bunu ekle:<br><code id="redirectUri"></code>
+    <br><button class="ghost" style="margin:10px 0 0;padding:8px 16px;font-size:14px" onclick="copyRedirect()">Kopyala</button></div>
+  <div class="box" id="accountBox"></div>
+  <button class="big" onclick="saveSettings()">Kaydet</button>
+  <button class="link" onclick="logout()">Spotify bağlantısını kes</button>
+</section>
+
+<div id="toast"></div>
+
+<script src="jsQR.js"></script>
+<script>
+const REDIRECT_URI = location.origin + location.pathname;
+const SCOPES = 'user-modify-playback-state user-read-playback-state';
+const LS = { get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},
+             set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},
+             del:k=>{try{localStorage.removeItem(k)}catch(e){}} };
+
+let stream = null, scanning = false, currentUri = null, deviceId = null, paused = false, wakeLock = null;
+const $ = id => document.getElementById(id);
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+  if (id !== 'scan') stopCamera();
+  if (id === 'settings') fillSettings();
+  if (id === 'start') refreshStart();
+}
+function toast(msg, ms = 2600) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), ms);
+}
+
+/* ---------- Spotify auth (PKCE, no server needed) ---------- */
+function b64url(buf) { return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function randomString(n) { const a = new Uint8Array(n); crypto.getRandomValues(a); return b64url(a).slice(0, n); }
+
+async function login() {
+  const clientId = LS.get('clientId');
+  if (!clientId) { show('settings'); toast('Önce Client ID gir'); return; }
+  const verifier = randomString(64);
+  LS.set('pkce_verifier', verifier);
+  const challenge = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
+  const q = new URLSearchParams({ client_id: clientId, response_type: 'code', redirect_uri: REDIRECT_URI,
+    code_challenge_method: 'S256', code_challenge: challenge, scope: SCOPES });
+  location.href = 'https://accounts.spotify.com/authorize?' + q;
+}
+
+async function tokenRequest(params) {
+  const r = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ client_id: LS.get('clientId'), ...params }) });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error_description || j.error || 'token hatası');
+  LS.set('access_token', j.access_token);
+  LS.set('expires_at', String(Date.now() + (j.expires_in - 60) * 1000));
+  if (j.refresh_token) LS.set('refresh_token', j.refresh_token);
+}
+
+async function handleRedirect() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('error')) { history.replaceState(null, '', REDIRECT_URI); toast('Spotify girişi iptal edildi'); return; }
+  const code = q.get('code');
+  if (!code) return;
+  history.replaceState(null, '', REDIRECT_URI);
+  try {
+    await tokenRequest({ grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI, code_verifier: LS.get('pkce_verifier') });
+    toast('Spotify bağlandı ✓');
+  } catch (e) { toast('Giriş hatası: ' + e.message, 5000); }
+}
+
+async function getToken() {
+  if (!LS.get('refresh_token') && !LS.get('access_token')) return null;
+  if (Date.now() > Number(LS.get('expires_at') || 0)) {
+    try { await tokenRequest({ grant_type: 'refresh_token', refresh_token: LS.get('refresh_token') }); }
+    catch (e) { logout(true); return null; }
+  }
+  return LS.get('access_token');
+}
+const loggedIn = () => !!LS.get('refresh_token');
+
+async function api(method, path, body, retried) {
+  const token = await getToken();
+  if (!token) { show('start'); throw new Error('login'); }
+  const r = await fetch('https://api.spotify.com/v1' + path, { method,
+    headers: { Authorization: 'Bearer ' + token, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    body: body ? JSON.stringify(body) : undefined });
+  if (r.status === 401 && !retried) { LS.set('expires_at', '0'); return api(method, path, body, true); }
+  let data = null; try { data = await r.json(); } catch (e) {}
+  return { status: r.status, ok: r.ok, data };
+}
+
+/* ---------- Playback (plays inside the Spotify app, nothing shown here) ---------- */
+async function pickDevice() {
+  const r = await api('GET', '/me/player/devices');
+  const list = (r.data && r.data.devices) || [];
+  const usable = list.filter(d => !d.is_restricted);
+  const d = usable.find(d => d.is_active) || usable.find(d => d.type === 'Smartphone') || usable[0];
+  return d ? d.id : null;
+}
+
+async function playTrack(uri) {
+  currentUri = uri;
+  show('loading'); $('loadingText').textContent = 'Şarkı başlatılıyor…';
+  try {
+    deviceId = deviceId || await pickDevice();
+    if (!deviceId) { show('nodevice'); return; }
+    let r = await api('PUT', '/me/player/play?device_id=' + encodeURIComponent(deviceId), { uris: [uri], position_ms: 0 });
+    if (r.status === 404) {                       // device went to sleep — look again once
+      deviceId = await pickDevice();
+      if (!deviceId) { show('nodevice'); return; }
+      r = await api('PUT', '/me/player/play?device_id=' + encodeURIComponent(deviceId), { uris: [uri], position_ms: 0 });
+    }
+    if (r.status === 403) { show('start'); toast('Spotify Premium gerekiyor (ya da hesabın uygulamaya eklenmemiş).', 6000); return; }
+    if (!r.ok && r.status !== 202) { show('nodevice'); return; }
+    api('PUT', '/me/player/repeat?state=off&device_id=' + encodeURIComponent(deviceId)).catch(()=>{});
+    paused = false; updatePauseUi();
+    history.pushState({ screen: 'playing' }, '');
+    show('playing');
+  } catch (e) { if (e.message !== 'login') { toast('Bir hata oldu, tekrar dene'); toScanner(); } }
+}
+
+async function pausePlayback() {
+  if (!deviceId) return;
+  await api('PUT', '/me/player/pause?device_id=' + encodeURIComponent(deviceId)).catch(()=>{});
+}
+function updatePauseUi() {
+  $('pauseBtn').textContent = paused ? '▶ Devam' : '⏸ Durdur';
+  $('eq').classList.toggle('paused', paused);
+}
+$('pauseBtn').onclick = async () => {
+  if (paused) { await api('PUT', '/me/player/play?device_id=' + encodeURIComponent(deviceId)); paused = false; }
+  else { await pausePlayback(); paused = true; }
+  updatePauseUi();
+};
+$('restartBtn').onclick = async () => {
+  await api('PUT', '/me/player/seek?position_ms=0&device_id=' + encodeURIComponent(deviceId));
+  if (paused) { await api('PUT', '/me/player/play?device_id=' + encodeURIComponent(deviceId)); paused = false; updatePauseUi(); }
+};
+$('nextBtn').onclick = () => history.back();          // same as the phone's back gesture
+$('retryBtn').onclick = () => { deviceId = null; currentUri && playTrack(currentUri); };
+
+window.addEventListener('popstate', () => {
+  if ($('playing').classList.contains('on') || $('loading').classList.contains('on')) { pausePlayback(); toScanner(); }
+});
+
+/* ---------- Camera + QR ---------- */
+function parseSpotify(text) {
+  if (!text) return null;
+  let m = text.match(/spotify:track:([A-Za-z0-9]{22})/);
+  if (!m) m = text.match(/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(?:embed\/)?track\/([A-Za-z0-9]{22})/);
+  return m ? 'spotify:track:' + m[1] : null;
+}
+
+async function toScanner() {
+  show('scan');
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }, audio: false });
+    const v = $('video'); v.srcObject = stream; await v.play();
+    scanning = true; lastBad = ''; scanLoop();
+    requestWakeLock();
+  } catch (e) {
+    show('start'); toast('Kameraya izin verilmedi. Ayarlar > Safari > Kamera iznini aç.', 6000);
+  }
+}
+function stopCamera() {
+  scanning = false;
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+}
+
+const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d', { willReadFrequently: true });
+let lastBad = '';
+function scanLoop() {
+  if (!scanning) return;
+  const v = $('video');
+  if (v.readyState >= 2 && v.videoWidth) {
+    const size = Math.min(v.videoWidth, v.videoHeight, 720);          // center square, downscaled
+    const sw = Math.min(v.videoWidth, v.videoHeight);
+    canvas.width = canvas.height = size;
+    ctx.drawImage(v, (v.videoWidth - sw) / 2, (v.videoHeight - sw) / 2, sw, sw, 0, 0, size, size);
+    const img = ctx.getImageData(0, 0, size, size);
+    const code = jsQR(img.data, size, size, { inversionAttempts: 'attemptBoth' });
+    if (code && code.data) {
+      const uri = parseSpotify(code.data);
+      if (uri) { if (navigator.vibrate) navigator.vibrate(60); stopCamera(); playTrack(uri); return; }
+      if (code.data !== lastBad) { lastBad = code.data; toast('Bu QR bir Spotify şarkısı değil'); }
+    }
+  }
+  setTimeout(() => requestAnimationFrame(scanLoop), 120);
+}
+
+async function requestWakeLock() {
+  try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => wakeLock = null); } } catch (e) {}
+}
+
+/* ---------- Start / settings ---------- */
+function refreshStart() {
+  const hasId = !!LS.get('clientId');
+  $('startBtn').textContent = !hasId ? 'Kurulum' : loggedIn() ? 'Başla' : "Spotify'a bağlan";
+  $('startNote').textContent = !hasId ? 'İlk kullanımda Spotify Client ID gerekir.' :
+    loggedIn() ? 'Spotify uygulaması telefonda açık olsun (arka planda).' : 'Spotify Premium hesabınla bağlan.';
+}
+$('startBtn').onclick = () => {
+  if (!LS.get('clientId')) return show('settings');
+  if (!loggedIn()) return login();
+  deviceId = null;
+  toScanner();
+};
+function goHome() { stopCamera(); show('start'); }
+function fillSettings() {
+  $('clientId').value = LS.get('clientId') || '';
+  $('redirectUri').textContent = REDIRECT_URI;
+  $('accountBox').innerHTML = loggedIn() ? 'Spotify: <b style="color:#1ed760">bağlı</b>' : 'Spotify: bağlı değil';
+}
+function copyRedirect() { navigator.clipboard.writeText(REDIRECT_URI).then(() => toast('Kopyalandı')); }
+function saveSettings() {
+  const v = $('clientId').value.trim();
+  if (v !== (LS.get('clientId') || '')) logout(true);
+  LS.set('clientId', v);
+  if (v && !loggedIn()) login(); else show('start');
+}
+function logout(silent) {
+  ['access_token', 'refresh_token', 'expires_at'].forEach(LS.del);
+  if (!silent) { toast('Bağlantı kesildi'); show('start'); }
+}
+
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && scanning) requestWakeLock(); });
+
+const SLOGANS = ['BESTer: Prestij Müzik', 'BESTer: Kapalıçarşı Edition', "BESTer: gerçek bir Hitıs'tır"];
+$('slogan').textContent = SLOGANS[Math.floor(Math.random() * SLOGANS.length)];
+(async () => { await handleRedirect(); show('start'); })();
+</script>
+</body>
+</html>
