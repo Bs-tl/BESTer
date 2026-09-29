@@ -22,8 +22,20 @@
   h1 { font-size:44px; margin:0 0 6px; letter-spacing:-1px; }
   h1 span { color:var(--accent); }
   .hero { width:min(86vw,380px); height:auto; margin-bottom:4px; -webkit-mask-image:radial-gradient(ellipse 72% 70% at 50% 46%, #000 62%, transparent 100%); mask-image:radial-gradient(ellipse 72% 70% at 50% 46%, #000 62%, transparent 100%); }
-  .slogan { font-family:Georgia,'Times New Roman',serif; font-style:italic; font-size:20px; margin:0 0 4px;
-    background:linear-gradient(180deg,#fff4c4,#eec45c 45%,#b8801f 60%,#f6d678); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .homebtn { position:absolute; top:calc(env(safe-area-inset-top) + 12px); left:14px; z-index:5; width:52px; height:52px; padding:0;
+    display:flex; align-items:center; justify-content:center; border-radius:50%;
+    background:rgba(20,18,30,.55); border:1px solid rgba(236,206,130,.45); color:#ecce82;
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+  .homebtn svg { width:26px; height:26px; }
+  .sloganbox { height:64px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin:0 0 2px; }
+  .slogan.in { animation:sloganIn .7s cubic-bezier(.2,.8,.2,1) both, shimmer 2.4s linear infinite; }
+  .slogan.out { animation:sloganOut .45s ease-in both; }
+  @keyframes sloganIn { from { opacity:0; transform:translateY(22px) scale(.92); filter:blur(4px); } to { opacity:1; transform:none; filter:none; } }
+  @keyframes sloganOut { to { opacity:0; transform:translateY(-22px) scale(.96); filter:blur(4px); } }
+  @keyframes shimmer { from { background-position:200% 0; } to { background-position:-200% 0; } }
+  .slogan { font-family:Georgia,'Times New Roman',serif; font-style:italic; font-weight:700; font-size:clamp(22px,6.4vw,30px); margin:0; letter-spacing:.2px;
+    filter:drop-shadow(0 0 14px rgba(236,196,92,.35)); background-size:300% 100% !important;
+    background:linear-gradient(100deg,#b8801f 0%,#f6d678 20%,#fffbe6 30%,#f6d678 40%,#b8801f 55%,#eec45c 75%,#b8801f 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
   p { color:var(--muted); line-height:1.45; margin:8px 0; }
   button { font:inherit; border:0; border-radius:999px; cursor:pointer; }
   .big { background:linear-gradient(180deg,#f6d678,#c8942e); color:#1a1206; font-size:22px; font-weight:700; padding:20px 56px; margin-top:22px;
@@ -70,7 +82,7 @@
 <section class="screen" id="start">
   <button class="gear" onclick="show('settings')" aria-label="Ayarlar">⚙︎</button>
   <img class="hero" src="bester-hero.jpg" alt="BESTer">
-  <p class="slogan" id="slogan">Prestij Müzik</p>
+  <div class="sloganbox"><p class="slogan" id="slogan"></p></div>
   <p>Kartı okut, şarkıyı dinle, yılını tahmin et.</p>
   <button class="big" id="startBtn">Başla</button>
   <p id="startNote" style="font-size:13px;margin-top:18px"></p>
@@ -79,7 +91,7 @@
 <!-- SCANNER -->
 <section class="screen" id="scan">
   <video id="video" playsinline muted></video>
-  <div class="topbar"><button class="ghost" onclick="goHome()">✕</button></div>
+  <button class="homebtn" onclick="goHome()" aria-label="Ana ekran"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg></button>
   <div class="frame"></div>
   <div class="scanhint">QR kodu çerçeveye getir</div>
 </section>
@@ -92,6 +104,7 @@
 
 <!-- PLAYING -->
 <section class="screen" id="playing">
+  <button class="homebtn" onclick="goHome()" aria-label="Ana ekran"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg></button>
   <div class="eq" id="eq"><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <p style="font-size:20px;color:#fff;font-weight:600;margin:0">Şarkı çalıyor</p>
   <p>Hangi yıl? Kartı zaman çizelgene yerleştir.</p>
@@ -104,6 +117,7 @@
 
 <!-- NO DEVICE -->
 <section class="screen" id="nodevice">
+  <button class="homebtn" onclick="goHome()" aria-label="Ana ekran"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg></button>
   <h2 style="margin:0 0 8px">Spotify hazır değil</h2>
   <p>Spotify uygulamasını aç, herhangi bir şarkıyı 1 saniye çalıp durdur, sonra buraya geri dön.</p>
   <button class="big green" onclick="location.href='spotify:'">Spotify'ı aç</button>
@@ -257,6 +271,7 @@ $('nextBtn').onclick = () => history.back();          // same as the phone's bac
 $('retryBtn').onclick = () => { deviceId = null; currentUri && playTrack(currentUri); };
 
 window.addEventListener('popstate', () => {
+  if (skipPop) { skipPop = false; return; }
   if ($('playing').classList.contains('on') || $('loading').classList.contains('on')) { pausePlayback(); toScanner(); }
 });
 
@@ -322,7 +337,12 @@ $('startBtn').onclick = () => {
   deviceId = null;
   toScanner();
 };
-function goHome() { stopCamera(); show('start'); }
+let skipPop = false;
+function goHome() {
+  stopCamera();
+  if ($('playing').classList.contains('on')) { pausePlayback(); if (history.state && history.state.screen === 'playing') { skipPop = true; history.back(); } }
+  show('start');
+}
 function fillSettings() {
   $('clientId').value = LS.get('clientId') || '';
   $('redirectUri').textContent = REDIRECT_URI;
@@ -342,8 +362,21 @@ function logout(silent) {
 
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && scanning) requestWakeLock(); });
 
-const SLOGANS = ['BESTer: Prestij Müzik', 'BESTer: Kapalıçarşı Edition', "BESTer: gerçek bir Hitıs'tır"];
-$('slogan').textContent = SLOGANS[Math.floor(Math.random() * SLOGANS.length)];
+const SLOGANS = ['BESTer: Prestij Müzik', 'BESTer: Kapalıçarşı Edition', "BESTer: gerçek bir Hits'tır"];
+// every launch starts from the next slogan, then they keep rotating with an animation
+let sloganIdx = (Number(LS.get('sloganIdx') || -1) + 1) % SLOGANS.length;
+LS.set('sloganIdx', String(sloganIdx));
+function showSlogan() {
+  const el = $('slogan');
+  el.classList.remove('in', 'out'); void el.offsetWidth;
+  el.textContent = SLOGANS[sloganIdx]; el.classList.add('in');
+}
+showSlogan();
+setInterval(() => {
+  if (!$('start').classList.contains('on')) return;
+  const el = $('slogan'); el.classList.remove('in'); el.classList.add('out');
+  setTimeout(() => { sloganIdx = (sloganIdx + 1) % SLOGANS.length; showSlogan(); }, 450);
+}, 3600);
 (async () => { await handleRedirect(); show('start'); })();
 </script>
 </body>
